@@ -67,7 +67,7 @@ void initializeScreenAndCamera() {
 
 
 
-inline void sendLineToDisplay() __attribute__((always_inline));
+inline void sendLineToDisplay(int dis, int& end1) __attribute__((always_inline));
 inline void screenLineStart(void) __attribute__((always_inline));
 inline void screenLineEnd(void) __attribute__((always_inline));
 inline void sendPixelByte(uint8_t byte) __attribute__((always_inline));
@@ -82,7 +82,7 @@ uint8_t screenLineIndex;
 
 
 // this is called in Arduino loop() function
-void processFrame() {
+void processFrame(int dis , int& end1) {
   screenLineIndex = screen_h;
 
   noInterrupts();
@@ -91,7 +91,7 @@ void processFrame() {
 
   for (uint8_t i = 0; i < camera.getLineCount(); i++) {
     camera.readLine();
-    sendLineToDisplay();
+    sendLineToDisplay(dis, end1);
   }
   interrupts();
 }
@@ -105,21 +105,35 @@ static const uint16_t byteCountForDisplay = camera.getPixelBufferLength() < scre
                                             camera.getPixelBufferLength() : screen_w*2;
 
 
-void sendLineToDisplay() {
+void sendLineToDisplay(int dis, int& end1) {
+  //String stri = String("  "+String (dis));
   if (screenLineIndex > 0) {
 
     screenLineStart();
 #if GRAYSCALE_PIXELS == 1
-    for (uint16_t i=0; i<camera.getLineLength(); i++) {
+    for (uint16_t i=50; i<camera.getLineLength(); i++) {
       sendPixelByte(graysScaleTableHigh[camera.getPixelByte(i)]);
       sendPixelByte(graysScaleTableLow[camera.getPixelByte(i)]);
     }
 #else
-    for (uint16_t i=0; i<byteCountForDisplay; i++) {
+    for (uint16_t i=50; i<byteCountForDisplay; i++) {
       sendPixelByte(camera.getPixelByte(i));
     }
+    
 #endif
-    screenLineEnd();
+      screenLineEnd();
+      
+      if (end1 == 1){
+        end1 = 0;
+        tft.fillScreen(ST7735_BLACK);
+        tft.setCursor(20, 140);
+        tft.setTextSize(2);
+        tft.println(String(dis));
+      }
+      
+      
+    
+    
   }
 }
 
